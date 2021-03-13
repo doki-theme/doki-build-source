@@ -1,0 +1,19 @@
+{
+  "name": "doki-build-source",
+  "version": "1.0.0",
+  "description": "Building blocks for constructing the Doki Themes",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/doki-theme/doki-build-source.git"
+  },
+  "author": "Unthottled",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/doki-theme/doki-build-source/issues"
+  },
+  "homepage": "https://github.com/doki-theme/doki-build-source#readme"
+}
