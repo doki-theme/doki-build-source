@@ -2,8 +2,14 @@
   "name": "doki-build-source",
   "version": "1.0.0",
   "description": "Building blocks for constructing the Doki Themes",
-  "main": "index.js",
+  "main": "./lib/index.js",
+  "module": "./lib/index.js",
+  "files": [
+    "lib/"
+  ],
   "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepublish": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -15,5 +21,8 @@
   "bugs": {
     "url": "https://github.com/doki-theme/doki-build-source/issues"
   },
-  "homepage": "https://github.com/doki-theme/doki-build-source#readme"
+  "homepage": "https://github.com/doki-theme/doki-build-source#readme",
+  "devDependencies": {
+    "typescript": "^4.2.3"
+  }
 }
