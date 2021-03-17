@@ -25,6 +25,8 @@ export function getDisplayName(dokiTheme: DokiTheme) {
 }
 
 
+
+
 export const getRepoDirectory = (dirname: string) =>
   path.resolve(dirname, "..", "..");
 
@@ -66,7 +68,7 @@ function resolveTemplate<T, R>(
   }
 }
 
-function resolveColor(
+export function resolveColor(
   color: string,
   namedColors: StringDictonary<string>
 ): string {
@@ -118,7 +120,7 @@ function applyNamedColors(
     }, {});
 }
 
-function constructNamedColorTemplate(
+export function constructNamedColorTemplate(
   dokiThemeTemplateJson: MasterDokiThemeDefinition,
   dokiTemplateDefinitions: DokiThemeDefinitions
 ) {
@@ -247,7 +249,7 @@ function resolveTemplateVariable(
   return hexColor;
 }
 
-function fillInTemplateScript(
+export function fillInTemplateScript(
   templateToFillIn: string,
   templateVariables: StringDictonary<any>
 ) {
