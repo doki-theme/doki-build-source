@@ -47,7 +47,7 @@ interface BackgroundPositionings {
   secondary?: BackgroundPositioning;
 }
 
-export interface JupyterDokiThemeDefinition {
+export interface BaseAppDokiThemeDefinition {
   id: string;
   overrides: {
     editorScheme?: {

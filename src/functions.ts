@@ -1,6 +1,32 @@
-import path from 'path';
-import fs from 'fs';
-import { DokiThemeDefinitions, MasterDokiThemeDefinition, StringDictonary } from "./types";
+import path from "path";
+import fs from "fs";
+import {
+  DokiThemeDefinitions,
+  MasterDokiThemeDefinition,
+  StringDictonary,
+} from "./types";
+import { GroupToNameMapping } from "./GroupToNameMapping";
+
+
+
+type DokiTheme = {
+  path: string;
+  definition: MasterDokiThemeDefinition;
+  stickers: { default: { path: string; name: string } };
+  theme: {};
+};
+
+function getGroupName(dokiTheme: DokiTheme) {
+  return GroupToNameMapping[dokiTheme.definition.group];
+}
+
+export function getDisplayName(dokiTheme: DokiTheme) {
+  return `${getGroupName(dokiTheme)}${dokiTheme.definition.name}`;
+}
+
+
+export const getRepoDirectory = (dirname: string) =>
+  path.resolve(dirname, "..", "..");
 
 const LAF_TYPE = "laf";
 const SYNTAX_TYPE = "syntax";
@@ -158,99 +184,134 @@ function getColorFromTemplate(
   return resolvedTemplateVariable;
 }
 
+export const readJson = <T>(jsonPath: string): T =>
+  JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
 
+/**internal functions */
+type TemplateTypes = StringDictonary<StringDictonary<string>>;
+
+const isTemplate = (filePath: string): boolean => !!getTemplateType(filePath);
+
+export const readTemplates = (templatePaths: string[]): TemplateTypes => {
+  return templatePaths
+    .filter(isTemplate)
+    .map((templatePath) => {
+      return {
+        type: getTemplateType(templatePath)!!,
+        template: readJson<any>(templatePath),
+      };
+    })
+    .reduce(
+      (accum: TemplateTypes, templateRepresentation) => {
+        accum[templateRepresentation.type][
+          templateRepresentation.template.name
+        ] = templateRepresentation.template;
+        return accum;
+      },
+      {
+        [SYNTAX_TYPE]: {},
+        [LAF_TYPE]: {},
+        [NAMED_COLOR_TYPE]: {},
+      }
+    );
+};
+/**end internal functions */
 
 export function walkDir(dir: string): Promise<string[]> {
-    const values: Promise<string[]>[] = fs
-        .readdirSync(dir)
-        .map((file: string) => {
-            const dirPath: string = path.join(dir, file);
-            const isDirectory = fs.statSync(dirPath).isDirectory();
-            if (isDirectory) {
-                return walkDir(dirPath);
-            } else {
-                return Promise.resolve([path.join(dir, file)]);
-            }
-        });
-    return Promise.all(values).then((scannedDirectories) =>
-        scannedDirectories.reduce((accum, files) => accum.concat(files), [])
-    );
+  const values: Promise<string[]>[] = fs
+    .readdirSync(dir)
+    .map((file: string) => {
+      const dirPath: string = path.join(dir, file);
+      const isDirectory = fs.statSync(dirPath).isDirectory();
+      if (isDirectory) {
+        return walkDir(dirPath);
+      } else {
+        return Promise.resolve([path.join(dir, file)]);
+      }
+    });
+  return Promise.all(values).then((scannedDirectories) =>
+    scannedDirectories.reduce((accum, files) => accum.concat(files), [])
+  );
 }
 
 function resolveTemplateVariable(
-    templateVariable: string,
-    templateVariables: StringDictonary<string>
-  ): string {
-    const isToRGB = templateVariable.startsWith("^");
-    const cleanTemplateVariable = templateVariable.substr(isToRGB ? 1 : 0);
-    const hexColor = resolveColor(
-      getColorFromTemplate(templateVariables, cleanTemplateVariable),
-      templateVariables
-    );
-    return hexColor;
-  }
+  templateVariable: string,
+  templateVariables: StringDictonary<string>
+): string {
+  const isToRGB = templateVariable.startsWith("^");
+  const cleanTemplateVariable = templateVariable.substr(isToRGB ? 1 : 0);
+  const hexColor = resolveColor(
+    getColorFromTemplate(templateVariables, cleanTemplateVariable),
+    templateVariables
+  );
+  return hexColor;
+}
 
 function fillInTemplateScript(
-    templateToFillIn: string,
-    templateVariables: StringDictonary<any>
+  templateToFillIn: string,
+  templateVariables: StringDictonary<any>
 ) {
-    return templateToFillIn
-        .split("\n")
-        .map((line) => {
-            const reduce = line.split("").reduce(
-                (accum, next) => {
-                    if (accum.currentTemplate) {
-                        if (next === "}" && accum.currentTemplate.endsWith("}")) {
-                            // evaluate Template
-                            const templateVariable = accum.currentTemplate.substring(
-                                2,
-                                accum.currentTemplate.length - 1
-                            );
-                            accum.currentTemplate = "";
-                            const resolvedTemplateVariable = resolveTemplateVariable(
-                                templateVariable,
-                                templateVariables
-                            );
-                            accum.line += resolvedTemplateVariable;
-                        } else {
-                            accum.currentTemplate += next;
-                        }
-                    } else if (next === "{" && !accum.stagingTemplate) {
-                        accum.stagingTemplate = next;
-                    } else if (accum.stagingTemplate && next === "{") {
-                        accum.stagingTemplate = "";
-                        accum.currentTemplate = "{{";
-                    } else if (accum.stagingTemplate) {
-                        accum.line += accum.stagingTemplate + next;
-                        accum.stagingTemplate = "";
-                    } else {
-                        accum.line += next;
-                    }
+  return templateToFillIn
+    .split("\n")
+    .map((line) => {
+      const reduce = line.split("").reduce(
+        (accum, next) => {
+          if (accum.currentTemplate) {
+            if (next === "}" && accum.currentTemplate.endsWith("}")) {
+              // evaluate Template
+              const templateVariable = accum.currentTemplate.substring(
+                2,
+                accum.currentTemplate.length - 1
+              );
+              accum.currentTemplate = "";
+              const resolvedTemplateVariable = resolveTemplateVariable(
+                templateVariable,
+                templateVariables
+              );
+              accum.line += resolvedTemplateVariable;
+            } else {
+              accum.currentTemplate += next;
+            }
+          } else if (next === "{" && !accum.stagingTemplate) {
+            accum.stagingTemplate = next;
+          } else if (accum.stagingTemplate && next === "{") {
+            accum.stagingTemplate = "";
+            accum.currentTemplate = "{{";
+          } else if (accum.stagingTemplate) {
+            accum.line += accum.stagingTemplate + next;
+            accum.stagingTemplate = "";
+          } else {
+            accum.line += next;
+          }
 
-                    return accum;
-                },
-                {
-                    currentTemplate: "",
-                    stagingTemplate: "",
-                    line: "",
-                }
-            );
-            return reduce.line + reduce.stagingTemplate || reduce.currentTemplate;
-        })
-        .join("\n");
+          return accum;
+        },
+        {
+          currentTemplate: "",
+          stagingTemplate: "",
+          line: "",
+        }
+      );
+      return reduce.line + reduce.stagingTemplate || reduce.currentTemplate;
+    })
+    .join("\n");
 }
 
 /**
- * 
+ *
  * @param hex hex string that starts with #
  * @returns string rgba
  */
 function hexToRGBA(hex: string) {
-    const hexValue = parseInt(hex.substring(1), 16);
-    return 'rgba(' + [
-        (hexValue >> 24) & 255,
-        (hexValue >> 16) & 255,
-        (hexValue >> 8) & 255,
-        hexValue & 255
-    ].join(',') + ')';
+  const hexValue = parseInt(hex.substring(1), 16);
+  return (
+    "rgba(" +
+    [
+      (hexValue >> 24) & 255,
+      (hexValue >> 16) & 255,
+      (hexValue >> 8) & 255,
+      hexValue & 255,
+    ].join(",") +
+    ")"
+  );
 }
