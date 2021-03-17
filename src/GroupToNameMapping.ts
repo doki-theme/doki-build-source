@@ -1,6 +1,6 @@
 import { StringDictonary } from "./types";
 
-const GroupToNameMapping: StringDictonary<string> = {
+export const GroupToNameMapping: StringDictonary<string> = {
   "Kill la Kill": "KillLaKill: ",
   "Re Zero": "Re:Zero: ",
   "Fate": "Fate: ",
@@ -21,5 +21,3 @@ const GroupToNameMapping: StringDictonary<string> = {
   "Sword Art Online" : "SAO: ",
   "Lucky Star" : "LS: ",
 };
-
-export default GroupToNameMapping;

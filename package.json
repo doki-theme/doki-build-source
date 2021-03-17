@@ -2,14 +2,15 @@
   "name": "doki-build-source",
   "version": "1.0.0",
   "description": "Building blocks for constructing the Doki Themes",
-  "main": "./lib/index.js",
-  "module": "./lib/index.js",
+  "main": "./lib/cjs/index.js",
+  "module": "./lib/esm/index.js",
   "files": [
     "lib/"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "watch": "tsc -p tsconfig.json --watch",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json",
+    "watch:esm": "tsc -p tsconfig.json --watch",
+    "watch:cjs": "tsc -p tsconfig-cjs.json --watch",
     "prepublish": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
