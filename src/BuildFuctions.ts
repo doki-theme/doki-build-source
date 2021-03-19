@@ -9,7 +9,7 @@ import {
   BaseAppDokiThemeDefinition,
   DokiThemeDefinitions,
   MasterDokiThemeDefinition,
-  StringDictonary,
+  StringDictionary,
 } from "./types";
 
 export interface EvaluateArgs {
@@ -43,7 +43,7 @@ export const evaluateTemplates = <T extends BaseAppDokiThemeDefinition, R>(
           .map((dokiThemeAppDefinitionPath) =>
             readJson<T>(dokiThemeAppDefinitionPath)
           )
-          .reduce((accum: StringDictonary<T>, def) => {
+          .reduce((accum: StringDictionary<T>, def) => {
             accum[def.id] = def;
             return accum;
           }, {}),
@@ -129,9 +129,19 @@ export function resolvePaths(dirName: string) {
     "assets",
     "themes"
   );
+
+   const templateDirectoryPath = path.resolve(
+    repoDirectory,
+    "buildSrc",
+    "assets",
+    "templates",
+  );
+
+  
   return {
     repoDirectory,
     masterThemeDefinitionDirectoryPath,
     appDefinitionDirectoryPath,
+    templateDirectoryPath,
   };
 }

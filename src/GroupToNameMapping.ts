@@ -1,6 +1,6 @@
-import { StringDictonary } from "./types";
+import { StringDictionary } from "./types";
 
-export const GroupToNameMapping: StringDictonary<string> = {
+export const GroupToNameMapping: StringDictionary<string> = {
   "Kill la Kill": "KillLaKill: ",
   "Re Zero": "Re:Zero: ",
   "Fate": "Fate: ",

@@ -1,5 +1,5 @@
 interface HasColors {
-  colors: StringDictonary<string>;
+  colors: StringDictionary<string>;
 }
 
 export interface Overrides {
@@ -20,15 +20,15 @@ export interface MasterDokiThemeDefinition {
   overrides?: Overrides;
   product?: 'community' | 'ultimate';
   stickers: Stickers;
-  colors: StringDictonary<string>;
+  colors: StringDictionary<string>;
   editorScheme?: EditorScheme;
 }
 
 export interface EditorScheme {
-  colors: StringDictonary<string>
+  colors: StringDictionary<string>
 }
 
-export interface StringDictonary<T> {
+export interface StringDictionary<T> {
   [key: string]: T;
 }
 
@@ -51,15 +51,15 @@ export interface BaseAppDokiThemeDefinition {
   id: string;
   overrides: {
     editorScheme?: {
-      [key: string]: StringDictonary<string>
+      [key: string]: StringDictionary<string>
     }
     theme?: {
-      [key: string]: StringDictonary<string>
+      [key: string]: StringDictionary<string>
     }
   };
   laf: {
     extends: string;
-    ui: StringDictonary<string>;
+    ui: StringDictionary<string>;
   };
   backgrounds?: BackgroundPositionings;
   syntax: {};

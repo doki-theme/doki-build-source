@@ -1,13 +1,13 @@
 import path from "path";
 import fs from "fs";
 import {
+  BaseAppDokiThemeDefinition,
   DokiThemeDefinitions,
   MasterDokiThemeDefinition,
-  StringDictonary,
+  StringDictionary,
 } from "./types";
 import { GroupToNameMapping } from "./GroupToNameMapping";
-
-
+import { resolvePaths } from "./BuildFuctions";
 
 type DokiTheme = {
   path: string;
@@ -23,9 +23,6 @@ function getGroupName(dokiTheme: DokiTheme) {
 export function getDisplayName(dokiTheme: DokiTheme) {
   return `${getGroupName(dokiTheme)}${dokiTheme.definition.name}`;
 }
-
-
-
 
 export const getRepoDirectory = (dirname: string) =>
   path.resolve(dirname, "..", "..");
@@ -45,9 +42,36 @@ function getTemplateType(templatePath: string) {
   return undefined;
 }
 
+
+export const dictionaryReducer = <T>(
+  accum: StringDictionary<T>,
+  [key, value]: [string, T],
+) => {
+  accum[key] = value;
+  return accum;
+};
+
+export function resolveStickerPath(
+  themeDefinitionPath: string,
+  sticker: string,
+  currentDirectory: string,
+) {
+  const {
+    masterThemeDefinitionDirectoryPath
+  } = resolvePaths(currentDirectory)
+
+  const stickerPath = path.resolve(
+    path.resolve(themeDefinitionPath, '..'),
+    sticker
+  );
+  return stickerPath.substr(masterThemeDefinitionDirectoryPath.length + '/definitions'.length);
+}
+
+
+
 function resolveTemplate<T, R>(
   childTemplate: T,
-  templateNameToTemplate: StringDictonary<T>,
+  templateNameToTemplate: StringDictionary<T>,
   attributeResolver: (t: T) => R,
   parentResolver: (t: T) => string
 ): R {
@@ -70,7 +94,7 @@ function resolveTemplate<T, R>(
 
 export function resolveColor(
   color: string,
-  namedColors: StringDictonary<string>
+  namedColors: StringDictionary<string>
 ): string {
   const startingTemplateIndex = color.indexOf("&");
   if (startingTemplateIndex > -1) {
@@ -102,9 +126,9 @@ export function resolveColor(
 }
 
 function applyNamedColors(
-  objectWithNamedColors: StringDictonary<string>,
-  namedColors: StringDictonary<string>
-): StringDictonary<string> {
+  objectWithNamedColors: StringDictionary<string>,
+  namedColors: StringDictionary<string>
+): StringDictionary<string> {
   return Object.keys(objectWithNamedColors)
     .map((key) => {
       const color = objectWithNamedColors[key];
@@ -114,7 +138,7 @@ function applyNamedColors(
         value: resolvedColor,
       };
     })
-    .reduce((accum: StringDictonary<string>, kv) => {
+    .reduce((accum: StringDictionary<string>, kv) => {
       accum[kv.key] = kv.value;
       return accum;
     }, {});
@@ -171,8 +195,8 @@ function resolveNamedColors(
   );
 }
 
-function getColorFromTemplate(
-  templateVariables: StringDictonary<string>,
+export function getColorFromTemplate(
+  templateVariables: StringDictionary<string>,
   templateVariable: string
 ) {
   const resolvedTemplateVariable = templateVariable
@@ -190,7 +214,7 @@ export const readJson = <T>(jsonPath: string): T =>
   JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
 
 /**internal functions */
-type TemplateTypes = StringDictonary<StringDictonary<string>>;
+type TemplateTypes = StringDictionary<StringDictionary<string>>;
 
 const isTemplate = (filePath: string): boolean => !!getTemplateType(filePath);
 
@@ -238,7 +262,7 @@ export function walkDir(dir: string): Promise<string[]> {
 
 function resolveTemplateVariable(
   templateVariable: string,
-  templateVariables: StringDictonary<string>
+  templateVariables: StringDictionary<string>
 ): string {
   const isToRGB = templateVariable.startsWith("^");
   const cleanTemplateVariable = templateVariable.substr(isToRGB ? 1 : 0);
@@ -251,7 +275,11 @@ function resolveTemplateVariable(
 
 export function fillInTemplateScript(
   templateToFillIn: string,
-  templateVariables: StringDictonary<any>
+  templateVariables: StringDictionary<any>,
+  templateVaribaleResolver: (
+    templateVariable: string, 
+    templateVariables: StringDictionary<string>
+    ) => string = resolveTemplateVariable
 ) {
   return templateToFillIn
     .split("\n")
@@ -266,7 +294,7 @@ export function fillInTemplateScript(
                 accum.currentTemplate.length - 1
               );
               accum.currentTemplate = "";
-              const resolvedTemplateVariable = resolveTemplateVariable(
+              const resolvedTemplateVariable = templateVaribaleResolver(
                 templateVariable,
                 templateVariables
               );
@@ -304,7 +332,7 @@ export function fillInTemplateScript(
  * @param hex hex string that starts with #
  * @returns string rgba
  */
-function hexToRGBA(hex: string) {
+export function hexToRGBA(hex: string) {
   const hexValue = parseInt(hex.substring(1), 16);
   return (
     "rgba(" +
@@ -316,4 +344,13 @@ function hexToRGBA(hex: string) {
     ].join(",") +
     ")"
   );
+}
+
+export function toRGBArray(hexColor: string): number[] {
+  const hexNumber = parseInt(hexColor.substr(1), 16);
+  return [
+    (hexNumber & 0xFF0000) >> 16,
+    (hexNumber & 0XFF00) >> 8,
+    hexNumber & 0xFF
+  ]
 }
