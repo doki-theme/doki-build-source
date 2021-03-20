@@ -16,12 +16,20 @@ type DokiTheme = {
   theme: {};
 };
 
-function getGroupName(dokiTheme: DokiTheme) {
-  return GroupToNameMapping[dokiTheme.definition.group];
+export function getGroupName(definition: MasterDokiThemeDefinition) {
+  const themeGroup = definition.group;
+  const groupMapping = GroupToNameMapping[themeGroup];
+
+  if (!groupMapping) {
+    throw new Error(`Unable to find group mapping
+        ${themeGroup} for theme ${definition.name}`);
+  }
+
+  return groupMapping;
 }
 
 export function getDisplayName(dokiTheme: DokiTheme) {
-  return `${getGroupName(dokiTheme)}${dokiTheme.definition.name}`;
+  return `${getGroupName(dokiTheme.definition)}${dokiTheme.definition.name}`;
 }
 
 export const getRepoDirectory = (dirname: string) =>
