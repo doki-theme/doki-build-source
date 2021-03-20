@@ -23,7 +23,8 @@ export const evaluateTemplates = <T extends BaseAppDokiThemeDefinition, R>(
     dokiFileDefinitionPath: string,
     dokiThemeDefinition: MasterDokiThemeDefinition,
     dokiTemplateDefinitions: DokiThemeDefinitions,
-    dokiThemeAppDefinition: T
+    dokiThemeAppDefinition: T,
+    masterTemplates: DokiThemeDefinitions,
   ) => R
 ): Promise<R[]> => {
   const {
@@ -43,6 +44,7 @@ export const evaluateTemplates = <T extends BaseAppDokiThemeDefinition, R>(
         )
         .then((dokiThemeAppDefinitionPaths) => {
           return {
+            masterTemplates,
             dokiThemeAppDefinitions: dokiThemeAppDefinitionPaths
               .map((dokiThemeAppDefinitionPath) =>
                 readJson<T>(dokiThemeAppDefinitionPath)
@@ -54,7 +56,10 @@ export const evaluateTemplates = <T extends BaseAppDokiThemeDefinition, R>(
           };
         })
     )
-    .then(({ dokiThemeAppDefinitions }) =>
+    .then(({
+      masterTemplates,
+      dokiThemeAppDefinitions,
+    }) =>
       walkDir(path.resolve(masterThemeDefinitionDirectoryPath, "templates"))
         .then(readTemplates)
         .then((dokiTemplateDefinitions) => {
@@ -66,6 +71,7 @@ export const evaluateTemplates = <T extends BaseAppDokiThemeDefinition, R>(
             )
             .then((dokiFileDefinitionPaths) => {
               return {
+                masterTemplates,
                 dokiThemeAppDefinitions,
                 dokiTemplateDefinitions,
                 dokiFileDefinitionPaths,
@@ -76,6 +82,7 @@ export const evaluateTemplates = <T extends BaseAppDokiThemeDefinition, R>(
 
     .then((templatesAndDefinitions) => {
       const {
+        masterTemplates,
         dokiTemplateDefinitions,
         dokiThemeAppDefinitions,
         dokiFileDefinitionPaths,
@@ -115,7 +122,8 @@ export const evaluateTemplates = <T extends BaseAppDokiThemeDefinition, R>(
               dokiFileDefinitionPath,
               dokiThemeDefinition,
               dokiTemplateDefinitions,
-              dokiThemeAppDefinition
+              dokiThemeAppDefinition,
+              masterTemplates,
             )
         );
     });
