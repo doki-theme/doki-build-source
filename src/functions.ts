@@ -27,9 +27,9 @@ export function getDisplayName(dokiTheme: DokiTheme) {
 export const getRepoDirectory = (dirname: string) =>
   path.resolve(dirname, "..", "..");
 
-const LAF_TYPE = "laf";
-const SYNTAX_TYPE = "syntax";
-const NAMED_COLOR_TYPE = "colorz";
+export const LAF_TYPE = "laf";
+export const SYNTAX_TYPE = "syntax";
+export const NAMED_COLOR_TYPE = "colorz";
 
 function getTemplateType(templatePath: string) {
   if (templatePath.endsWith("laf.template.json")) {
@@ -69,7 +69,7 @@ export function resolveStickerPath(
 
 
 
-function resolveTemplate<T, R>(
+export function resolveTemplate<T, R>(
   childTemplate: T,
   templateNameToTemplate: StringDictionary<T>,
   attributeResolver: (t: T) => R,
@@ -125,7 +125,7 @@ export function resolveColor(
   return color;
 }
 
-function applyNamedColors(
+export function applyNamedColors(
   objectWithNamedColors: StringDictionary<string>,
   namedColors: StringDictionary<string>
 ): StringDictionary<string> {
@@ -178,7 +178,7 @@ export function constructNamedColorTemplate(
   };
 }
 
-function resolveNamedColors(
+export function resolveNamedColors(
   dokiTemplateDefinitions: DokiThemeDefinitions,
   dokiThemeTemplateJson: MasterDokiThemeDefinition
 ) {
@@ -346,11 +346,55 @@ export function hexToRGBA(hex: string) {
   );
 }
 
-export function toRGBArray(hexColor: string): number[] {
-  const hexNumber = parseInt(hexColor.substr(1), 16);
-  return [
-    (hexNumber & 0xFF0000) >> 16,
-    (hexNumber & 0XFF00) >> 8,
-    hexNumber & 0xFF
-  ]
+export function toRGBArray(hexColor: string | [number, number, number]): [number, number, number] {
+  if (typeof hexColor === 'string') {
+    const hex = parseInt(hexColor.substr(1), 16)
+    return [
+      (hex & 0xFF0000) >> 16,
+      (hex & 0xFF00) >> 8,
+      (hex & 0xFF)
+    ]
+  }
+  return hexColor
+}
+
+/**
+ * Converts an RGB color value to HSL. Conversion formula
+ * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+ * Assumes r, g, and b are contained in the set [0, 255] and
+ * returns h, s, and l in the set [0, 1].
+ *
+ * @param   Number  r       The red color value
+ * @param   Number  g       The green color value
+ * @param   Number  b       The blue color value
+ * @return  Array           The HSL representation
+ */
+export function rgbToHsl([r, g, b]: [number, number, number]) {
+  r /= 255, g /= 255, b /= 255;
+
+  var max = Math.max(r, g, b), min = Math.min(r, g, b);
+  var h, s, l = (max + min) / 2;
+
+  if (max == min) {
+    h = s = 0; // achromatic
+  } else {
+    var d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+    switch (max) {
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
+    }
+    h = h || 0;
+    h /= 6;
+  }
+
+  return [h, 1, l];
 }
