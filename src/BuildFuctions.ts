@@ -24,31 +24,36 @@ export const evaluateTemplates = <T extends BaseAppDokiThemeDefinition, R>(
     dokiThemeDefinition: MasterDokiThemeDefinition,
     dokiTemplateDefinitions: DokiThemeDefinitions,
     dokiThemeAppDefinition: T
-  ) => R,
+  ) => R
 ): Promise<R[]> => {
   const {
     appDefinitionDirectoryPath,
     masterThemeDefinitionDirectoryPath,
+    masterTemplateDirectoryPath,
   } = resolvePaths(evaluateArgs.currentWorkingDirectory);
 
   const { appName } = evaluateArgs;
 
-  return walkDir(appDefinitionDirectoryPath)
-    .then((files) =>
-      files.filter((file) => file.endsWith(`${appName}.definition.json`))
+  return walkDir(masterTemplateDirectoryPath)
+    .then(readTemplates)
+    .then((masterTemplates) =>
+      walkDir(appDefinitionDirectoryPath)
+        .then((files) =>
+          files.filter((file) => file.endsWith(`${appName}.definition.json`))
+        )
+        .then((dokiThemeAppDefinitionPaths) => {
+          return {
+            dokiThemeAppDefinitions: dokiThemeAppDefinitionPaths
+              .map((dokiThemeAppDefinitionPath) =>
+                readJson<T>(dokiThemeAppDefinitionPath)
+              )
+              .reduce((accum: StringDictionary<T>, def) => {
+                accum[def.id] = def;
+                return accum;
+              }, {}),
+          };
+        })
     )
-    .then((dokiThemeAppDefinitionPaths) => {
-      return {
-        dokiThemeAppDefinitions: dokiThemeAppDefinitionPaths
-          .map((dokiThemeAppDefinitionPath) =>
-            readJson<T>(dokiThemeAppDefinitionPath)
-          )
-          .reduce((accum: StringDictionary<T>, def) => {
-            accum[def.id] = def;
-            return accum;
-          }, {}),
-      };
-    })
     .then(({ dokiThemeAppDefinitions }) =>
       walkDir(path.resolve(masterThemeDefinitionDirectoryPath, "templates"))
         .then(readTemplates)
@@ -123,6 +128,11 @@ export function resolvePaths(dirName: string) {
     "masterThemes"
   );
 
+  const masterTemplateDirectoryPath = path.resolve(
+    masterThemeDefinitionDirectoryPath,
+    "templates"
+  );
+
   const appDefinitionDirectoryPath = path.resolve(
     repoDirectory,
     "buildSrc",
@@ -130,17 +140,17 @@ export function resolvePaths(dirName: string) {
     "themes"
   );
 
-   const templateDirectoryPath = path.resolve(
+  const templateDirectoryPath = path.resolve(
     repoDirectory,
     "buildSrc",
     "assets",
-    "templates",
+    "templates"
   );
 
-  
   return {
     repoDirectory,
     masterThemeDefinitionDirectoryPath,
+    masterTemplateDirectoryPath,
     appDefinitionDirectoryPath,
     templateDirectoryPath,
   };
