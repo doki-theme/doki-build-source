@@ -16,12 +16,20 @@ type DokiTheme = {
   theme: {};
 };
 
-function getGroupName(dokiTheme: DokiTheme) {
-  return GroupToNameMapping[dokiTheme.definition.group];
+export function getGroupName(definition: MasterDokiThemeDefinition) {
+  const themeGroup = definition.group;
+  const groupMapping = GroupToNameMapping[themeGroup];
+
+  if (!groupMapping) {
+    throw new Error(`Unable to find group mapping
+        ${themeGroup} for theme ${definition.name}`);
+  }
+
+  return groupMapping;
 }
 
 export function getDisplayName(dokiTheme: DokiTheme) {
-  return `${getGroupName(dokiTheme)}${dokiTheme.definition.name}`;
+  return `${getGroupName(dokiTheme.definition)}${dokiTheme.definition.name}`;
 }
 
 export const getRepoDirectory = (dirname: string) =>
@@ -57,14 +65,14 @@ export function resolveStickerPath(
   currentDirectory: string,
 ) {
   const {
-    masterThemeDefinitionDirectoryPath
+    appDefinitionDirectoryPath 
   } = resolvePaths(currentDirectory)
 
   const stickerPath = path.resolve(
     path.resolve(themeDefinitionPath, '..'),
     sticker
   );
-  return stickerPath.substr(masterThemeDefinitionDirectoryPath.length + '/definitions'.length);
+  return stickerPath.substr(appDefinitionDirectoryPath.length + '/definitions'.length);
 }
 
 

@@ -20,50 +20,62 @@ export interface EvaluateArgs {
 export const evaluateTemplates = <T extends BaseAppDokiThemeDefinition, R>(
   evaluateArgs: EvaluateArgs,
   createDokiTheme: (
-    dokiFileDefinitionPath: string,
-    dokiThemeDefinition: MasterDokiThemeDefinition,
-    dokiTemplateDefinitions: DokiThemeDefinitions,
-    dokiThemeAppDefinition: T
-  ) => R,
+    masterThemeDefinitionPath: string,
+    masterThemeDefinition: MasterDokiThemeDefinition,
+    appTemplateDefinitions: DokiThemeDefinitions,
+    appThemeDefinition: T,
+    masterTemplateDefinitions: DokiThemeDefinitions,
+  ) => R
 ): Promise<R[]> => {
   const {
     appDefinitionDirectoryPath,
     masterThemeDefinitionDirectoryPath,
+    masterTemplateDirectoryPath,
+    appTemplatesDirectoryPath,
   } = resolvePaths(evaluateArgs.currentWorkingDirectory);
 
   const { appName } = evaluateArgs;
 
-  return walkDir(appDefinitionDirectoryPath)
-    .then((files) =>
-      files.filter((file) => file.endsWith(`${appName}.definition.json`))
+  return walkDir(masterTemplateDirectoryPath)
+    .then(readTemplates)
+    .then((masterTemplateDefinitions) =>
+      walkDir(appDefinitionDirectoryPath)
+        .then((files) =>
+          files.filter((file) => file.endsWith(`${appName}.definition.json`))
+        )
+        .then((appThemeDefinitionPaths) => {
+          return {
+            masterTemplateDefinitions,
+            appThemeDefinitions: appThemeDefinitionPaths
+              .map((appThemeDefinitionPath) =>
+                readJson<T>(appThemeDefinitionPath)
+              )
+              .reduce((accum: StringDictionary<T>, def) => {
+                accum[def.id] = def;
+                return accum;
+              }, {}),
+          };
+        })
     )
-    .then((dokiThemeAppDefinitionPaths) => {
-      return {
-        dokiThemeAppDefinitions: dokiThemeAppDefinitionPaths
-          .map((dokiThemeAppDefinitionPath) =>
-            readJson<T>(dokiThemeAppDefinitionPath)
-          )
-          .reduce((accum: StringDictionary<T>, def) => {
-            accum[def.id] = def;
-            return accum;
-          }, {}),
-      };
-    })
-    .then(({ dokiThemeAppDefinitions }) =>
-      walkDir(path.resolve(masterThemeDefinitionDirectoryPath, "templates"))
+    .then(({
+      masterTemplateDefinitions,
+      appThemeDefinitions,
+    }) =>
+      walkDir(appTemplatesDirectoryPath)
         .then(readTemplates)
-        .then((dokiTemplateDefinitions) => {
+        .then((appTemplateDefinitions) => {
           return walkDir(
             path.resolve(masterThemeDefinitionDirectoryPath, "definitions")
           )
             .then((files) =>
               files.filter((file) => file.endsWith("master.definition.json"))
             )
-            .then((dokiFileDefinitionPaths) => {
+            .then((masterThemeDefinitionPaths) => {
               return {
-                dokiThemeAppDefinitions,
-                dokiTemplateDefinitions,
-                dokiFileDefinitionPaths,
+                masterTemplateDefinitions,
+                appThemeDefinitions,
+                appTemplateDefinitions,
+                masterThemeDefinitionPaths,
               };
             });
         })
@@ -71,46 +83,50 @@ export const evaluateTemplates = <T extends BaseAppDokiThemeDefinition, R>(
 
     .then((templatesAndDefinitions) => {
       const {
-        dokiTemplateDefinitions,
-        dokiThemeAppDefinitions,
-        dokiFileDefinitionPaths,
+        masterTemplateDefinitions,
+        appTemplateDefinitions,
+        appThemeDefinitions,
+        masterThemeDefinitionPaths,
       } = templatesAndDefinitions;
 
-      return dokiFileDefinitionPaths
-        .map((dokiFileDefinitionPath) => {
-          const dokiThemeDefinition = readJson<MasterDokiThemeDefinition>(
-            dokiFileDefinitionPath
+      return masterThemeDefinitionPaths
+        .map((masterThemeDefinitionPath) => {
+          const masterThemeDefinition = readJson<MasterDokiThemeDefinition>(
+            masterThemeDefinitionPath
           );
-          const dokiThemeAppDefinition =
-            dokiThemeAppDefinitions[dokiThemeDefinition.id];
-          if (!dokiThemeAppDefinition) {
+          const appThemeDefinition =
+            appThemeDefinitions[masterThemeDefinition.id];
+          if (!appThemeDefinition) {
             throw new Error(
-              `${dokiThemeDefinition.displayName}'s theme does not have a Jupyter Definition!!`
+              `${masterThemeDefinition.displayName}'s theme does not have a ${
+                evaluateArgs.appName
+              } Definition!!`
             );
           }
           return {
-            dokiFileDefinitionPath,
-            dokiThemeDefinition,
-            dokiThemeAppDefinition,
+            masterThemeDefinitionPath,
+            masterThemeDefinition,
+            appThemeDefinition,
           };
         })
         .filter(
           (pathAndDefinition) =>
-            (pathAndDefinition.dokiThemeDefinition.product === "ultimate" &&
+            (pathAndDefinition.masterThemeDefinition.product === "ultimate" &&
               process.env.PRODUCT === "ultimate") ||
-            pathAndDefinition.dokiThemeDefinition.product !== "ultimate"
+            pathAndDefinition.masterThemeDefinition.product !== "ultimate"
         )
         .map(
           ({
-            dokiFileDefinitionPath,
-            dokiThemeDefinition,
-            dokiThemeAppDefinition,
+            masterThemeDefinitionPath,
+            masterThemeDefinition,
+            appThemeDefinition,
           }) =>
             createDokiTheme(
-              dokiFileDefinitionPath,
-              dokiThemeDefinition,
-              dokiTemplateDefinitions,
-              dokiThemeAppDefinition
+              masterThemeDefinitionPath,
+              masterThemeDefinition,
+              appTemplateDefinitions,
+              appThemeDefinition,
+              masterTemplateDefinitions,
             )
         );
     });
@@ -123,6 +139,11 @@ export function resolvePaths(dirName: string) {
     "masterThemes"
   );
 
+  const masterTemplateDirectoryPath = path.resolve(
+    masterThemeDefinitionDirectoryPath,
+    "templates"
+  );
+
   const appDefinitionDirectoryPath = path.resolve(
     repoDirectory,
     "buildSrc",
@@ -130,18 +151,18 @@ export function resolvePaths(dirName: string) {
     "themes"
   );
 
-   const templateDirectoryPath = path.resolve(
+  const templateDirectoryPath = path.resolve(
     repoDirectory,
     "buildSrc",
     "assets",
-    "templates",
+    "templates"
   );
 
-  
   return {
     repoDirectory,
     masterThemeDefinitionDirectoryPath,
+    masterTemplateDirectoryPath,
     appDefinitionDirectoryPath,
-    templateDirectoryPath,
+    appTemplatesDirectoryPath: templateDirectoryPath,
   };
 }
