@@ -31,6 +31,7 @@ export const evaluateTemplates = <T extends BaseAppDokiThemeDefinition, R>(
     appDefinitionDirectoryPath,
     masterThemeDefinitionDirectoryPath,
     masterTemplateDirectoryPath,
+    templateDirectoryPath,
   } = resolvePaths(evaluateArgs.currentWorkingDirectory);
 
   const { appName } = evaluateArgs;
@@ -60,7 +61,7 @@ export const evaluateTemplates = <T extends BaseAppDokiThemeDefinition, R>(
       masterTemplates,
       dokiThemeAppDefinitions,
     }) =>
-      walkDir(path.resolve(masterThemeDefinitionDirectoryPath, "templates"))
+      walkDir(templateDirectoryPath)
         .then(readTemplates)
         .then((dokiTemplateDefinitions) => {
           return walkDir(
@@ -97,7 +98,9 @@ export const evaluateTemplates = <T extends BaseAppDokiThemeDefinition, R>(
             dokiThemeAppDefinitions[dokiThemeDefinition.id];
           if (!dokiThemeAppDefinition) {
             throw new Error(
-              `${dokiThemeDefinition.displayName}'s theme does not have a Jupyter Definition!!`
+              `${dokiThemeDefinition.displayName}'s theme does not have a ${
+                evaluateArgs.appName
+              } Definition!!`
             );
           }
           return {
