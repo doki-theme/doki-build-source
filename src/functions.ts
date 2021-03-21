@@ -65,14 +65,14 @@ export function resolveStickerPath(
   currentDirectory: string,
 ) {
   const {
-    masterThemeDefinitionDirectoryPath
+    appDefinitionDirectoryPath 
   } = resolvePaths(currentDirectory)
 
   const stickerPath = path.resolve(
     path.resolve(themeDefinitionPath, '..'),
     sticker
   );
-  return stickerPath.substr(masterThemeDefinitionDirectoryPath.length + '/definitions'.length);
+  return stickerPath.substr(appDefinitionDirectoryPath.length + '/definitions'.length);
 }
 
 
