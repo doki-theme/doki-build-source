@@ -20,35 +20,35 @@ export interface EvaluateArgs {
 export const evaluateTemplates = <T extends BaseAppDokiThemeDefinition, R>(
   evaluateArgs: EvaluateArgs,
   createDokiTheme: (
-    dokiFileDefinitionPath: string,
-    dokiThemeDefinition: MasterDokiThemeDefinition,
-    dokiTemplateDefinitions: DokiThemeDefinitions,
-    dokiThemeAppDefinition: T,
-    masterTemplates: DokiThemeDefinitions,
+    masterThemeDefinitionPath: string,
+    masterThemeDefinition: MasterDokiThemeDefinition,
+    appTemplateDefinitions: DokiThemeDefinitions,
+    appThemeDefinition: T,
+    masterTemplateDefinitions: DokiThemeDefinitions,
   ) => R
 ): Promise<R[]> => {
   const {
     appDefinitionDirectoryPath,
     masterThemeDefinitionDirectoryPath,
     masterTemplateDirectoryPath,
-    templateDirectoryPath,
+    appTemplatesDirectoryPath,
   } = resolvePaths(evaluateArgs.currentWorkingDirectory);
 
   const { appName } = evaluateArgs;
 
   return walkDir(masterTemplateDirectoryPath)
     .then(readTemplates)
-    .then((masterTemplates) =>
+    .then((masterTemplateDefinitions) =>
       walkDir(appDefinitionDirectoryPath)
         .then((files) =>
           files.filter((file) => file.endsWith(`${appName}.definition.json`))
         )
-        .then((dokiThemeAppDefinitionPaths) => {
+        .then((appThemeDefinitionPaths) => {
           return {
-            masterTemplates,
-            dokiThemeAppDefinitions: dokiThemeAppDefinitionPaths
-              .map((dokiThemeAppDefinitionPath) =>
-                readJson<T>(dokiThemeAppDefinitionPath)
+            masterTemplateDefinitions,
+            appThemeDefinitions: appThemeDefinitionPaths
+              .map((appThemeDefinitionPath) =>
+                readJson<T>(appThemeDefinitionPath)
               )
               .reduce((accum: StringDictionary<T>, def) => {
                 accum[def.id] = def;
@@ -58,24 +58,24 @@ export const evaluateTemplates = <T extends BaseAppDokiThemeDefinition, R>(
         })
     )
     .then(({
-      masterTemplates,
-      dokiThemeAppDefinitions,
+      masterTemplateDefinitions,
+      appThemeDefinitions,
     }) =>
-      walkDir(templateDirectoryPath)
+      walkDir(appTemplatesDirectoryPath)
         .then(readTemplates)
-        .then((dokiTemplateDefinitions) => {
+        .then((appTemplateDefinitions) => {
           return walkDir(
             path.resolve(masterThemeDefinitionDirectoryPath, "definitions")
           )
             .then((files) =>
               files.filter((file) => file.endsWith("master.definition.json"))
             )
-            .then((dokiFileDefinitionPaths) => {
+            .then((masterThemeDefinitionPaths) => {
               return {
-                masterTemplates,
-                dokiThemeAppDefinitions,
-                dokiTemplateDefinitions,
-                dokiFileDefinitionPaths,
+                masterTemplateDefinitions,
+                appThemeDefinitions,
+                appTemplateDefinitions,
+                masterThemeDefinitionPaths,
               };
             });
         })
@@ -83,50 +83,50 @@ export const evaluateTemplates = <T extends BaseAppDokiThemeDefinition, R>(
 
     .then((templatesAndDefinitions) => {
       const {
-        masterTemplates,
-        dokiTemplateDefinitions,
-        dokiThemeAppDefinitions,
-        dokiFileDefinitionPaths,
+        masterTemplateDefinitions,
+        appTemplateDefinitions,
+        appThemeDefinitions,
+        masterThemeDefinitionPaths,
       } = templatesAndDefinitions;
 
-      return dokiFileDefinitionPaths
-        .map((dokiFileDefinitionPath) => {
-          const dokiThemeDefinition = readJson<MasterDokiThemeDefinition>(
-            dokiFileDefinitionPath
+      return masterThemeDefinitionPaths
+        .map((masterThemeDefinitionPath) => {
+          const masterThemeDefinition = readJson<MasterDokiThemeDefinition>(
+            masterThemeDefinitionPath
           );
-          const dokiThemeAppDefinition =
-            dokiThemeAppDefinitions[dokiThemeDefinition.id];
-          if (!dokiThemeAppDefinition) {
+          const appThemeDefinition =
+            appThemeDefinitions[masterThemeDefinition.id];
+          if (!appThemeDefinition) {
             throw new Error(
-              `${dokiThemeDefinition.displayName}'s theme does not have a ${
+              `${masterThemeDefinition.displayName}'s theme does not have a ${
                 evaluateArgs.appName
               } Definition!!`
             );
           }
           return {
-            dokiFileDefinitionPath,
-            dokiThemeDefinition,
-            dokiThemeAppDefinition,
+            masterThemeDefinitionPath,
+            masterThemeDefinition,
+            appThemeDefinition,
           };
         })
         .filter(
           (pathAndDefinition) =>
-            (pathAndDefinition.dokiThemeDefinition.product === "ultimate" &&
+            (pathAndDefinition.masterThemeDefinition.product === "ultimate" &&
               process.env.PRODUCT === "ultimate") ||
-            pathAndDefinition.dokiThemeDefinition.product !== "ultimate"
+            pathAndDefinition.masterThemeDefinition.product !== "ultimate"
         )
         .map(
           ({
-            dokiFileDefinitionPath,
-            dokiThemeDefinition,
-            dokiThemeAppDefinition,
+            masterThemeDefinitionPath,
+            masterThemeDefinition,
+            appThemeDefinition,
           }) =>
             createDokiTheme(
-              dokiFileDefinitionPath,
-              dokiThemeDefinition,
-              dokiTemplateDefinitions,
-              dokiThemeAppDefinition,
-              masterTemplates,
+              masterThemeDefinitionPath,
+              masterThemeDefinition,
+              appTemplateDefinitions,
+              appThemeDefinition,
+              masterTemplateDefinitions,
             )
         );
     });
@@ -163,6 +163,6 @@ export function resolvePaths(dirName: string) {
     masterThemeDefinitionDirectoryPath,
     masterTemplateDirectoryPath,
     appDefinitionDirectoryPath,
-    templateDirectoryPath,
+    appTemplatesDirectoryPath: templateDirectoryPath,
   };
 }
