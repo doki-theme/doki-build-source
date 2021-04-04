@@ -2,6 +2,7 @@ import { StringDictionary } from "./types";
 
 export const GroupToNameMapping: StringDictionary<string> = {
   "Kill la Kill": "KillLaKill: ",
+  "Blend S": "BlendS: ",
   "Re Zero": "Re:Zero: ",
   "Fate": "Fate: ",
   "Gate": "Gate: ",
