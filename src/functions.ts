@@ -50,10 +50,9 @@ function getTemplateType(templatePath: string) {
   return undefined;
 }
 
-
 export const dictionaryReducer = <T>(
   accum: StringDictionary<T>,
-  [key, value]: [string, T],
+  [key, value]: [string, T]
 ) => {
   accum[key] = value;
   return accum;
@@ -62,20 +61,50 @@ export const dictionaryReducer = <T>(
 export function resolveStickerPath(
   themeDefinitionPath: string,
   sticker: string,
-  currentDirectory: string,
+  currentDirectory: string
 ) {
-  const {
-    appDefinitionDirectoryPath 
-  } = resolvePaths(currentDirectory)
+  const { appDefinitionDirectoryPath } = resolvePaths(currentDirectory);
 
   const stickerPath = path.resolve(
-    path.resolve(themeDefinitionPath, '..'),
+    path.resolve(themeDefinitionPath, ".."),
     sticker
   );
-  return stickerPath.substr(appDefinitionDirectoryPath.length + '/definitions'.length);
+  return stickerPath.substr(
+    appDefinitionDirectoryPath.length + "/definitions".length
+  );
 }
 
+export function composeTemplate<T, R>(
+  childTemplate: T,
+  templateNameToTemplate: StringDictionary<T>,
+  attributeResolver: (t: T) => R,
+  parentResolver: (t: T) => string[]
+): R {
+  if (!parentResolver(childTemplate)) {
+    return attributeResolver(childTemplate);
+  } else {
+    const templatesToResolve = parentResolver(childTemplate);
+    const resolvedBase = templatesToResolve
+      .map((templateToResolve) => {
+        const parent = templateNameToTemplate[templateToResolve];
+        return composeTemplate(
+          parent,
+          templateNameToTemplate,
+          attributeResolver,
+          parentResolver
+        );
+      })
+      .reduce((accum, resolvedTemplate) => ({
+        ...accum,
+        ...resolvedTemplate,
+      }), {});
 
+    return {
+      ...resolvedBase,
+      ...attributeResolver(childTemplate),
+    };
+  }
+}
 
 export function resolveTemplate<T, R>(
   childTemplate: T,
@@ -285,9 +314,9 @@ export function fillInTemplateScript(
   templateToFillIn: string,
   templateVariables: StringDictionary<any>,
   templateVaribaleResolver: (
-    templateVariable: string, 
+    templateVariable: string,
     templateVariables: StringDictionary<string>
-    ) => string = resolveTemplateVariable
+  ) => string = resolveTemplateVariable
 ) {
   return templateToFillIn
     .split("\n")
@@ -354,16 +383,14 @@ export function hexToRGBA(hex: string) {
   );
 }
 
-export function toRGBArray(hexColor: string | [number, number, number]): [number, number, number] {
-  if (typeof hexColor === 'string') {
-    const hex = parseInt(hexColor.substr(1), 16)
-    return [
-      (hex & 0xFF0000) >> 16,
-      (hex & 0xFF00) >> 8,
-      (hex & 0xFF)
-    ]
+export function toRGBArray(
+  hexColor: string | [number, number, number]
+): [number, number, number] {
+  if (typeof hexColor === "string") {
+    const hex = parseInt(hexColor.substr(1), 16);
+    return [(hex & 0xff0000) >> 16, (hex & 0xff00) >> 8, hex & 0xff];
   }
-  return hexColor
+  return hexColor;
 }
 
 /**
@@ -378,10 +405,13 @@ export function toRGBArray(hexColor: string | [number, number, number]): [number
  * @return  Array           The HSL representation
  */
 export function rgbToHsl([r, g, b]: [number, number, number]) {
-  r /= 255, g /= 255, b /= 255;
+  (r /= 255), (g /= 255), (b /= 255);
 
-  var max = Math.max(r, g, b), min = Math.min(r, g, b);
-  var h, s, l = (max + min) / 2;
+  var max = Math.max(r, g, b),
+    min = Math.min(r, g, b);
+  var h,
+    s,
+    l = (max + min) / 2;
 
   if (max == min) {
     h = s = 0; // achromatic
