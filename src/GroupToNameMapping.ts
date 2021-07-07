@@ -30,4 +30,5 @@ export const GroupToNameMapping: StringDictionary<string> = {
   Monogatari: "Monogatari: ",
   "Don't Toy with me Miss Nagatoro": "DTWMMN: ",
   "Yuru Camp": "YuruCamp: ",
+  "NekoPara": "NekoPara: ",
 };
