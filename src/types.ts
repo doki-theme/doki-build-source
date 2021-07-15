@@ -40,6 +40,7 @@ export interface Stickers {
 
 interface BackgroundPositioning {
   anchor: string;
+  opacity?: number;
 }
 
 interface BackgroundPositionings {
