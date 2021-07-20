@@ -112,20 +112,41 @@ export function resolveTemplate<T, R>(
   attributeResolver: (t: T) => R,
   parentResolver: (t: T) => string
 ): R {
-  if (!parentResolver(childTemplate)) {
+  return resolveTemplateWithCombini(
+    childTemplate,
+    templateNameToTemplate,
+    attributeResolver,
+    parentResolver,
+    (parent, child) => ({
+      ...parent,
+      ...child
+    })
+  )
+}
+
+export function resolveTemplateWithCombini<T, R>(
+  childTemplate: T,
+  templateNameToTemplate: StringDictionary<T>,
+  attributeResolver: (t: T) => R,
+  parentResolver: (t: T) => string | undefined,
+  combiniFunction: (parent: R, child: R) => R,
+): R {
+  const parentKey = parentResolver(childTemplate);
+  if (!parentKey) {
     return attributeResolver(childTemplate);
   } else {
-    const parent = templateNameToTemplate[parentResolver(childTemplate)];
-    const resolvedParent = resolveTemplate(
+    const parent = templateNameToTemplate[parentKey];
+    const resolvedParent = resolveTemplateWithCombini(
       parent,
       templateNameToTemplate,
       attributeResolver,
-      parentResolver
+      parentResolver,
+      combiniFunction,
     );
-    return {
-      ...resolvedParent,
-      ...attributeResolver(childTemplate),
-    };
+    return combiniFunction(
+      resolvedParent,
+      attributeResolver(childTemplate),
+    )
   }
 }
 
