@@ -11,6 +11,8 @@ export const GroupToNameMapping: StringDictionary<string> = {
   KonoSuba: "KonoSuba: ",
   "Love Live": "Love Live: ",
   OreGairu: "OreGairu: ",
+  OreImo: "OreImo: ",
+  "EroManga Sensei": "EroManga: ",
   "Miss Kobayashi's Dragon Maid": "DM: ",
   "Darling in the Franxx": "Franxx: ",
   "Bunny Senpai": "BunnySenpai: ",
