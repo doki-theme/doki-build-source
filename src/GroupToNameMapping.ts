@@ -15,6 +15,7 @@ export const GroupToNameMapping: StringDictionary<string> = {
   "EroManga Sensei": "EroManga: ",
   "Miss Kobayashi's Dragon Maid": "DM: ",
   "Darling in the Franxx": "Franxx: ",
+  "The Great Jahy Will Not Be Defeated": "JahySama: ",
   "Bunny Senpai": "BunnySenpai: ",
   "Quintessential Quintuplets": "QQ: ",
   "Type-Moon": "TypeMoon: ",
