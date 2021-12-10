@@ -98,16 +98,43 @@ export function composeTemplateWithCombini<T, R>(
   parentResolver: (t: T) => string[] | undefined,
   combiniFunction: (parent: R, child: R) => R,
 ): R {
-  const parentTemplates = parentResolver(childTemplate);
-  if (!parentTemplates) {
+  const parentTemplateNames = parentResolver(childTemplate);
+  if (!parentTemplateNames) {
     return attributeResolver(childTemplate);
   } else {
-    const templatesToResolve = parentTemplates;
-    const resolvedBase = templatesToResolve
-      .map((templateToResolve) => {
-        const parentTemplate = templateNameToTemplate[templateToResolve];
+    const fullParentTemplates = parentTemplateNames
+      .map(parentTemplateName => templateNameToTemplate[parentTemplateName]);
+
+    // combine parents first, so that we 
+    // know what will be overidden in the base/grandparent template
+    const combinedParents = fullParentTemplates
+      .map(parentTemplate => attributeResolver(parentTemplate))
+      .reduce((accum, nextTemplate) => combiniFunction(accum, nextTemplate));
+
+    const grandParentsToFillOut = 
+    fullParentTemplates.flatMap(
+      fullParentTemplate => parentResolver(fullParentTemplate) || []
+    );
+
+    if(!grandParentsToFillOut.length) {
+      // no grand parents, so these parents are the base
+      // of the template, apply the child overrides
+      return combiniFunction(
+        combinedParents,
+        attributeResolver(childTemplate)
+      );
+    } 
+
+    const resolvedBaseTemplate = Object.keys(
+        grandParentsToFillOut.reduce((accum, key)=> ({
+          ...accum,
+          [key]: key
+        }), {})
+      )
+      .map((grandParentToResolve) => {
+        const grandParentTemplate = templateNameToTemplate[grandParentToResolve];
         return composeTemplateWithCombini(
-          parentTemplate,
+          grandParentTemplate,
           templateNameToTemplate,
           attributeResolver,
           parentResolver,
@@ -118,8 +145,16 @@ export function composeTemplateWithCombini<T, R>(
         accum,
         resolvedTemplate,
       ));
+
+    // apply parent overrides to the base template
+    const fullParentTemplate = combiniFunction(
+      resolvedBaseTemplate,
+      combinedParents,
+    );
+
+    // apply child overrides to the parent overrides.
     return combiniFunction(
-      resolvedBase,
+      fullParentTemplate, 
       attributeResolver(childTemplate),
     );
   }
