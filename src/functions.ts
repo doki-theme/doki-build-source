@@ -1,7 +1,6 @@
 import path from "path";
 import fs from "fs";
 import {
-  BaseAppDokiThemeDefinition,
   DokiThemeDefinitions,
   MasterDokiThemeDefinition,
   StringDictionary,
@@ -80,29 +79,49 @@ export function composeTemplate<T, R>(
   attributeResolver: (t: T) => R,
   parentResolver: (t: T) => string[]
 ): R {
-  if (!parentResolver(childTemplate)) {
+  return composeTemplateWithCombini(
+    childTemplate,
+    templateNameToTemplate,
+    attributeResolver,
+    parentResolver,
+    (parent, child) => ({
+      ...parent,
+      ...child
+    })
+  )
+}
+
+export function composeTemplateWithCombini<T, R>(
+  childTemplate: T,
+  templateNameToTemplate: StringDictionary<T>,
+  attributeResolver: (t: T) => R,
+  parentResolver: (t: T) => string[] | undefined,
+  combiniFunction: (parent: R, child: R) => R,
+): R {
+  const parentTemplates = parentResolver(childTemplate);
+  if (!parentTemplates) {
     return attributeResolver(childTemplate);
   } else {
-    const templatesToResolve = parentResolver(childTemplate);
+    const templatesToResolve = parentTemplates;
     const resolvedBase = templatesToResolve
       .map((templateToResolve) => {
-        const parent = templateNameToTemplate[templateToResolve];
-        return composeTemplate(
-          parent,
+        const parentTemplate = templateNameToTemplate[templateToResolve];
+        return composeTemplateWithCombini(
+          parentTemplate,
           templateNameToTemplate,
           attributeResolver,
-          parentResolver
+          parentResolver,
+          combiniFunction,
         );
       })
-      .reduce((accum, resolvedTemplate) => ({
-        ...accum,
-        ...resolvedTemplate,
-      }), {});
-
-    return {
-      ...resolvedBase,
-      ...attributeResolver(childTemplate),
-    };
+      .reduce((accum, resolvedTemplate) => combiniFunction(
+        accum,
+        resolvedTemplate,
+      ));
+    return combiniFunction(
+      resolvedBase,
+      attributeResolver(childTemplate),
+    );
   }
 }
 
