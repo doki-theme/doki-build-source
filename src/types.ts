@@ -12,6 +12,7 @@ export interface DokiThemeDefinitions {
 
 export interface MasterDokiThemeDefinition {
   id: string;
+  characterId: string;
   name: string;
   displayName: string;
   dark: boolean;
