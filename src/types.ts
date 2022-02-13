@@ -15,6 +15,7 @@ export interface MasterDokiThemeDefinition {
   characterId: string;
   name: string;
   displayName: string;
+  conflictName?: string;
   dark: boolean;
   author: string;
   group: string;
