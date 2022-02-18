@@ -34,9 +34,21 @@ export interface StringDictionary<T> {
   [key: string]: T;
 }
 
+export enum Anchor {
+  LEFT = 'left',
+  RIGHT = 'right',
+  CENTER = 'center',
+}
+
+export interface Sticker {
+  name: string;
+  opacity: number;
+  anchor: Anchor;
+}
+
 export interface Stickers {
-  default: string;
-  secondary?: string;
+  default: Sticker;
+  secondary?: Sticker;
   normal?: string;
 }
 
