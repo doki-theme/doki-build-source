@@ -20,7 +20,7 @@ export interface MasterDokiThemeDefinition {
   author: string;
   group: string;
   overrides?: Overrides;
-  product?: 'community' | 'ultimate';
+  product?: 'community' | 'ultimate' | string;
   stickers: Stickers;
   colors: StringDictionary<string>;
   editorScheme?: EditorScheme;
@@ -37,7 +37,7 @@ export interface StringDictionary<T> {
 export interface Sticker {
   name: string;
   opacity: number;
-  anchor: 'left' | 'right' | 'center';
+  anchor: 'left' | 'right' | 'center' | string;
 }
 
 export interface Stickers {
