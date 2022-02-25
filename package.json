@@ -1,6 +1,6 @@
 {
   "name": "doki-build-source",
-  "version": "74.2.1",
+  "version": "74.2.2",
   "description": "Building blocks for constructing the Doki Themes",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",

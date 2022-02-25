@@ -34,16 +34,10 @@ export interface StringDictionary<T> {
   [key: string]: T;
 }
 
-export enum Anchor {
-  LEFT = 'left',
-  RIGHT = 'right',
-  CENTER = 'center',
-}
-
 export interface Sticker {
   name: string;
   opacity: number;
-  anchor: Anchor;
+  anchor: 'left' | 'right' | 'center';
 }
 
 export interface Stickers {
