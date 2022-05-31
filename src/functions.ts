@@ -390,7 +390,7 @@ export function fillInTemplateScript(
   templateVariables: StringDictionary<any>,
   templateVaribaleResolver: (
     templateVariable: string,
-    templateVariables: StringDictionary<string>
+    templateVariables: StringDictionary<any>
   ) => string = resolveTemplateVariable
 ) {
   return templateToFillIn
