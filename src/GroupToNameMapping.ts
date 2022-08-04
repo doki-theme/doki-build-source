@@ -6,7 +6,7 @@ export const GroupToNameMapping: StringDictionary<string> = {
   "Blend S": "BlendS: ",
   "Guilty Crown": "GuiltyCrown: ",
   "Code Geass": "CodeGeass: ",
-  "Helpful Fox Senko-san": "Senoko-san: ",
+  "Helpful Fox Senko-san": "Senko-san: ",
   "Charlotte": "Charlotte: ",
   "Toaru Majutsu no Index" : "Railgun: ",
   "The Rising of Shield Hero" : "ShieldHero: ",
