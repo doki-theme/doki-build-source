@@ -190,6 +190,9 @@ export function resolveTemplateWithCombini<T, R>(
     return attributeResolver(childTemplate);
   } else {
     const parent = templateNameToTemplate[parentKey];
+    if(!parent) {
+      throw new Error(`Expected template list to have parent key ${parentKey}.`);
+    }
     const resolvedParent = resolveTemplateWithCombini(
       parent,
       templateNameToTemplate,
