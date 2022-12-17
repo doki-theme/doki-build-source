@@ -45,6 +45,17 @@ function getTemplateType(templatePath: string) {
     return SYNTAX_TYPE;
   } else if (templatePath.endsWith("colors.template.json")) {
     return NAMED_COLOR_TYPE;
+  } else if (templatePath.endsWith('.template.json')) {
+    const fileName = templatePath.substring(
+      templatePath.lastIndexOf(path.sep) + 1
+    );
+    const templateTypeAndName = fileName.substring(
+      0,
+      fileName.indexOf('.template.json')
+    );
+    return templateTypeAndName.substring(
+      templateTypeAndName.lastIndexOf('.') + 1
+    )
   }
   return undefined;
 }
@@ -111,26 +122,26 @@ export function composeTemplateWithCombini<T, R>(
       .map(parentTemplate => attributeResolver(parentTemplate))
       .reduce((accum, nextTemplate) => combiniFunction(accum, nextTemplate));
 
-    const grandParentsToFillOut = 
-    fullParentTemplates.flatMap(
-      fullParentTemplate => parentResolver(fullParentTemplate) || []
-    );
+    const grandParentsToFillOut =
+      fullParentTemplates.flatMap(
+        fullParentTemplate => parentResolver(fullParentTemplate) || []
+      );
 
-    if(!grandParentsToFillOut.length) {
+    if (!grandParentsToFillOut.length) {
       // no grand parents, so these parents are the base
       // of the template, apply the child overrides
       return combiniFunction(
         combinedParents,
         attributeResolver(childTemplate)
       );
-    } 
+    }
 
     const resolvedBaseTemplate = Object.keys(
-        grandParentsToFillOut.reduce((accum, key)=> ({
-          ...accum,
-          [key]: key
-        }), {})
-      )
+      grandParentsToFillOut.reduce((accum, key) => ({
+        ...accum,
+        [key]: key
+      }), {})
+    )
       .map((grandParentToResolve) => {
         const grandParentTemplate = templateNameToTemplate[grandParentToResolve];
         return composeTemplateWithCombini(
@@ -154,7 +165,7 @@ export function composeTemplateWithCombini<T, R>(
 
     // apply child overrides to the parent overrides.
     return combiniFunction(
-      fullParentTemplate, 
+      fullParentTemplate,
       attributeResolver(childTemplate),
     );
   }
@@ -190,7 +201,7 @@ export function resolveTemplateWithCombini<T, R>(
     return attributeResolver(childTemplate);
   } else {
     const parent = templateNameToTemplate[parentKey];
-    if(!parent) {
+    if (!parent) {
       throw new Error(`Expected template list to have parent key ${parentKey}.`);
     }
     const resolvedParent = resolveTemplateWithCombini(
@@ -344,7 +355,12 @@ export const readTemplates = (templatePaths: string[]): TemplateTypes => {
     })
     .reduce(
       (accum: TemplateTypes, templateRepresentation) => {
-        accum[templateRepresentation.type][
+        const templateType = templateRepresentation.type;
+        if(!accum[templateType]) {
+          accum[templateType] = {}
+        }
+        
+        accum[templateType][
           templateRepresentation.template.name
         ] = templateRepresentation.template;
         return accum;
